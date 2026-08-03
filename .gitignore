@@ -1,0 +1,9 @@
+/.idea/
+/.vscode/
+/backend/vendor/
+/backend/var/
+/frontend/node_modules/
+/frontend/dist/
+backend/var/uploads/
+/.env
+/.env.local

@@ -1,0 +1,14 @@
+framework:
+  secret: '%env(APP_SECRET)%'
+  http_method_override: false
+  handle_all_throwables: true
+  php_errors:
+    log: true
+  messenger:
+    transports:
+      async:
+        dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+        options:
+          table_name: messenger_messages
+    routing:
+      App\Command\Message\SendApplicationMessage: async

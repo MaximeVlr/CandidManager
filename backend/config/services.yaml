@@ -1,0 +1,45 @@
+parameters:
+  app.mail_from: '%env(string:MAIL_FROM)%'
+  app.mail_from_name: '%env(string:MAIL_FROM_NAME)%'
+  app.mail_send_enabled: '%env(bool:MAIL_SEND_ENABLED)%'
+  app.mail_max_batch_size: '%env(int:MAIL_MAX_BATCH_SIZE)%'
+  app.mail_dry_run: '%env(bool:MAIL_DRY_RUN)%'
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  App\:
+    resource: '../src/'
+
+  App\Service\MailerConfiguration:
+    arguments:
+      $from: '%app.mail_from%'
+      $fromName: '%app.mail_from_name%'
+      $sendEnabled: '%app.mail_send_enabled%'
+      $maxBatchSize: '%app.mail_max_batch_size%'
+      $dryRun: '%app.mail_dry_run%'
+
+  App\Service\CvAttachmentStorage:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+
+  App\Service\SecretCipher:
+    arguments:
+      $appSecret: '%env(APP_SECRET)%'
+
+  App\Repository\JobApplicationRepositoryInterface:
+    alias: App\Repository\DoctrineJobApplicationRepository
+
+  App\Repository\MailTemplateRepositoryInterface:
+    alias: App\Repository\DoctrineMailTemplateRepository
+
+  App\Repository\ApplicationSendLogRepositoryInterface:
+    alias: App\Repository\DoctrineApplicationSendLogRepository
+
+  App\Repository\MailerSettingsRepositoryInterface:
+    alias: App\Repository\DoctrineMailerSettingsRepository
+
+  App\Service\ApplicationMailerInterface:
+    alias: App\Service\SymfonyApplicationMailer
