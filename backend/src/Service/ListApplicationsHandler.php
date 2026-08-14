@@ -24,7 +24,7 @@ final readonly class ListApplicationsHandler
             'search' => $query->search,
             'send_status' => $query->sendStatus,
             'response' => $query->response,
-            'follow_up' => $query->followUp,
+            'follow_up_count' => $query->followUpCount,
         ], $query->sort, $query->direction, $page, $limit);
 
         return new ApplicationListResult($result['items'], $result['total'], $page, $limit);

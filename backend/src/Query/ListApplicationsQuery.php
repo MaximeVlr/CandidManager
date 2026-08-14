@@ -10,7 +10,7 @@ final readonly class ListApplicationsQuery
         public ?string $search,
         public ?string $sendStatus,
         public ?string $response,
-        public ?bool $followUp,
+        public ?int $followUpCount,
         public string $sort,
         public string $direction,
         public int $page,

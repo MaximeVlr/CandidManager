@@ -42,7 +42,7 @@ final readonly class ExportApplicationsHandler
             'search' => $query->search,
             'send_status' => $query->sendStatus,
             'response' => $query->response,
-            'follow_up' => $query->followUp,
+            'follow_up_count' => $query->followUpCount,
         ], $query->sort, $query->direction, $limit);
     }
 }

@@ -100,11 +100,6 @@ function submit(): void {
           </select>
         </label>
 
-        <label class="checkbox-row">
-          <input v-model="form.follow_up" type="checkbox" />
-          <span>Relance a prevoir</span>
-        </label>
-
         <label class="is-wide">
           <span>Message personnalise</span>
           <textarea v-model="form.custom_message" required maxlength="10000" rows="7" />

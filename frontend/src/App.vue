@@ -37,7 +37,7 @@ const filters = reactive<ApplicationListFilters>({
   search: '',
   sendStatus: '',
   response: '',
-  followUp: '',
+  followUpCount: '',
   sort: 'created_at',
   direction: 'desc',
   page: 1,
@@ -48,7 +48,7 @@ const initialFilters: ApplicationListFilters = {
   search: '',
   sendStatus: '',
   response: '',
-  followUp: '',
+  followUpCount: '',
   sort: 'created_at',
   direction: 'desc',
   page: 1,
@@ -577,10 +577,9 @@ watch(activeView, (view) => {
 
           <label>
             <span>Relance</span>
-            <select v-model="filters.followUp">
-              <option value="">Toutes</option>
-              <option value="true">Oui</option>
-              <option value="false">Non</option>
+            <select v-model="filters.followUpCount">
+              <option value="">Aucune</option>
+              <option v-for="count in 6" :key="count - 1" :value="String(count - 1)">{{ count - 1 }}</option>
             </select>
           </label>
 
@@ -644,32 +643,34 @@ watch(activeView, (view) => {
                 >
                   &#9993;
                 </button>
-                <template v-else-if="application.send_status === 'sent' && application.response === 'none'">
-                  <button
-                    type="button"
-                    class="option-icon-button is-negative"
-                    :disabled="isSaving"
-                    aria-label="Marquer la reponse negative"
-                    title="Marquer negative"
-                    @click.stop="changeApplicationResponse(application, 'negative')"
-                  >
-                    x
-                  </button>
-                  <button
-                    type="button"
-                    class="option-icon-button is-positive"
-                    :disabled="isSaving"
-                    aria-label="Marquer la reponse positive"
-                    title="Marquer positive"
-                    @click.stop="changeApplicationResponse(application, 'positive')"
-                  >
-                    +
-                  </button>
+                <template v-else-if="application.send_status === 'sent'">
+                  <template v-if="application.response === 'none'">
+                    <button
+                      type="button"
+                      class="option-icon-button is-negative"
+                      :disabled="isSaving"
+                      aria-label="Marquer la reponse negative"
+                      title="Marquer negative"
+                      @click.stop="changeApplicationResponse(application, 'negative')"
+                    >
+                      x
+                    </button>
+                    <button
+                      type="button"
+                      class="option-icon-button is-positive"
+                      :disabled="isSaving"
+                      aria-label="Marquer la reponse positive"
+                      title="Marquer positive"
+                      @click.stop="changeApplicationResponse(application, 'positive')"
+                    >
+                      +
+                    </button>
+                  </template>
                   <button
                     v-if="canSendFollowUp(application)"
                     type="button"
                     class="follow-up-count-button"
-                    :disabled="isSending"
+                    :disabled="isSending || application.response !== 'none'"
                     :aria-label="`Envoyer une relance. ${application.follow_up_count} relance(s) effectuee(s)`"
                     :title="`Envoyer une relance. ${application.follow_up_count} relance(s) effectuee(s)`"
                     @click.stop="sendFollowUp(application)"
@@ -677,16 +678,6 @@ watch(activeView, (view) => {
                     {{ application.follow_up_count }}
                   </button>
                 </template>
-                <button
-                  v-else-if="application.send_status === 'sent' && application.response === 'pending' && canSendFollowUp(application)"
-                  type="button"
-                  class="follow-up-count-button"
-                  :aria-label="`${application.follow_up_count} relance(s) effectuee(s)`"
-                  :title="`${application.follow_up_count} relance(s) effectuee(s)`"
-                  @click.stop
-                >
-                  {{ application.follow_up_count }}
-                </button>
               </td>
             </tr>
           </tbody>

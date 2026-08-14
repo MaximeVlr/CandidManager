@@ -65,10 +65,10 @@ final class DoctrineJobApplicationRepository extends ServiceEntityRepository imp
                 ->setParameter('responseStatus', $filters['response']);
         }
 
-        if (($filters['follow_up'] ?? null) !== null) {
+        if (($filters['follow_up_count'] ?? null) !== null) {
             $queryBuilder
-                ->andWhere('application.followUp = :followUp')
-                ->setParameter('followUp', $filters['follow_up']);
+                ->andWhere('application.followUpCount = :followUpCount')
+                ->setParameter('followUpCount', $filters['follow_up_count']);
         }
 
         $countQueryBuilder = clone $queryBuilder;

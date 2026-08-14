@@ -38,13 +38,11 @@ final readonly class ApplicationController
     #[Route('/api/applications', name: 'api_applications_list', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
-        $followUp = $request->query->get('follow_up');
-
         $result = ($this->listApplications)(new ListApplicationsQuery(
             search: $request->query->get('search'),
             sendStatus: $request->query->get('send_status'),
             response: $request->query->get('response'),
-            followUp: $followUp === null || $followUp === '' ? null : filter_var($followUp, FILTER_VALIDATE_BOOLEAN),
+            followUpCount: $this->parseFollowUpCount($request),
             sort: $request->query->get('sort', 'created_at'),
             direction: $request->query->get('direction', 'desc'),
             page: $request->query->getInt('page', 1),
@@ -170,5 +168,18 @@ final readonly class ApplicationController
                 'errors' => $exception->errors(),
             ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
+    }
+
+    private function parseFollowUpCount(Request $request): ?int
+    {
+        $value = $request->query->get('follow_up_count');
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $count = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 5]]);
+
+        return $count === false ? null : $count;
     }
 }

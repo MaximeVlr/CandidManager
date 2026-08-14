@@ -18,7 +18,7 @@ interface JobApplicationRepositoryInterface
     public function findById(Uuid $id): ?JobApplication;
 
     /**
-     * @param array{search?: string|null, send_status?: string|null, response?: string|null, follow_up?: bool|null} $filters
+     * @param array{search?: string|null, send_status?: string|null, response?: string|null, follow_up_count?: int|null} $filters
      * @return array{items: list<JobApplication>, total: int}
      */
     public function search(array $filters, string $sort, string $direction, int $page, int $limit): array;
@@ -40,7 +40,7 @@ interface JobApplicationRepositoryInterface
     public function findFailedForRetry(int $limit): array;
 
     /**
-     * @param array{search?: string|null, send_status?: string|null, response?: string|null, follow_up?: bool|null} $filters
+     * @param array{search?: string|null, send_status?: string|null, response?: string|null, follow_up_count?: int|null} $filters
      * @return list<JobApplication>
      */
     public function findForExport(array $filters, string $sort, string $direction, int $limit): array;

@@ -28,7 +28,7 @@ export type ApplicationListFilters = {
   search: string;
   sendStatus: string;
   response: string;
-  followUp: string;
+  followUpCount: string;
   sort: string;
   direction: 'asc' | 'desc';
   page: number;

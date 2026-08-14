@@ -25,8 +25,8 @@ function buildApplicationSearchParams(filters: ApplicationListFilters, includePa
     params.set('response', filters.response);
   }
 
-  if (filters.followUp !== '') {
-    params.set('follow_up', filters.followUp);
+  if (filters.followUpCount !== '') {
+    params.set('follow_up_count', filters.followUpCount);
   }
 
   return params;
