@@ -1,7 +1,13 @@
 /.idea/
 /.vscode/
+## Backend
 /backend/vendor/
 /backend/var/
+/backend/.env
+/backend/.env.dev
+/backend/.env.test
+
+## Frontend
 /frontend/node_modules/
 /frontend/dist/
 backend/var/uploads/
