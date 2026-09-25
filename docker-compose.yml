@@ -16,17 +16,14 @@ services:
     command: sh -c "test -d vendor || composer install; php-fpm"
     volumes:
       - ./backend:/app
+    env_file:
+      - ./backend/.env
+      - ./backend/.env.dev
     environment:
       APP_ENV: dev
       APP_SECRET: change-me-in-local-env
       DATABASE_URL: postgresql://app:app@postgres:5432/app?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
-      MAILER_DSN: ${MAILER_DSN:-brevo+smtp://USERNAME:PASSWORD@default}
-      MAIL_FROM: ${MAIL_FROM:-}
-      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CandidManager}
-      MAIL_SEND_ENABLED: ${MAIL_SEND_ENABLED:-false}
-      MAIL_MAX_BATCH_SIZE: ${MAIL_MAX_BATCH_SIZE:-20}
-      MAIL_DRY_RUN: ${MAIL_DRY_RUN:-true}
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,17 +35,14 @@ services:
     command: sh -c "test -d vendor || composer install; php bin/console messenger:consume async --time-limit=3600 --memory-limit=128M --sleep=2 -vv"
     volumes:
       - ./backend:/app
+    env_file:
+      - ./backend/.env
+      - ./backend/.env.dev
     environment:
       APP_ENV: dev
       APP_SECRET: change-me-in-local-env
       DATABASE_URL: postgresql://app:app@postgres:5432/app?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
-      MAILER_DSN: ${MAILER_DSN:-brevo+smtp://USERNAME:PASSWORD@default}
-      MAIL_FROM: ${MAIL_FROM:-}
-      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CandidManager}
-      MAIL_SEND_ENABLED: ${MAIL_SEND_ENABLED:-false}
-      MAIL_MAX_BATCH_SIZE: ${MAIL_MAX_BATCH_SIZE:-20}
-      MAIL_DRY_RUN: ${MAIL_DRY_RUN:-true}
     depends_on:
       postgres:
         condition: service_healthy

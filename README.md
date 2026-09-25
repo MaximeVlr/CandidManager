@@ -20,16 +20,18 @@ Aucune installation locale de PHP, Composer, Node.js ou PostgreSQL n'est necessa
 
 ## Installation avec Docker
 
-Depuis la racine du projet, copier le fichier d'environnement d'exemple :
+Depuis la racine du projet, creer `backend/.env` a partir de l'exemple s'il n'existe pas, puis creer un fichier `backend/.env.dev` vide s'il n'existe pas :
 
 ```bash
-cp .env.example .env
+test -f backend/.env || cp .env.example backend/.env
+touch backend/.env.dev
 ```
 
 Sur Windows PowerShell :
 
 ```powershell
-Copy-Item .env.example .env
+if (!(Test-Path backend/.env)) { Copy-Item .env.example backend/.env }
+if (!(Test-Path backend/.env.dev)) { New-Item backend/.env.dev -ItemType File }
 ```
 
 Construire et demarrer les conteneurs :
@@ -85,7 +87,7 @@ docker compose down -v
 
 ## Configuration email Brevo
 
-La configuration se fait dans le fichier `.env` a la racine du projet :
+Les services `backend` et `messenger-worker` chargent `backend/.env`, puis `backend/.env.dev` (prioritaire). La configuration email se fait dans ces fichiers :
 
 ```env
 MAILER_DSN=brevo+smtp://USERNAME:PASSWORD@default
@@ -111,12 +113,26 @@ MAIL_SEND_ENABLED=true
 MAIL_DRY_RUN=false
 ```
 
+Apres une modification de ces fichiers, recreer les deux conteneurs pour charger les nouvelles valeurs :
+
+```bash
+docker compose up -d --no-deps --force-recreate backend messenger-worker
+```
+
+Les valeurs `APP_ENV`, `APP_SECRET`, `DATABASE_URL` et `MESSENGER_TRANSPORT_DSN` definies dans `docker-compose.yml` restent prioritaires pour conserver la configuration Docker et la cle des mots de passe mailer deja enregistres.
+
 ## Commandes utiles
 
 Executer les migrations :
 
 ```bash
 docker compose exec backend php bin/console doctrine:migrations:migrate
+```
+
+Verifier la coherence du schema apres une migration :
+
+```bash
+docker compose exec backend php bin/console doctrine:schema:validate
 ```
 
 Creer les templates par defaut :
