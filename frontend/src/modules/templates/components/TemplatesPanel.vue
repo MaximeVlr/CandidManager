@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
-import { createTemplate, deleteTemplate, fetchTemplate, fetchTemplateCategories, fetchTemplates, updateTemplate, uploadTemplateCv } from '../api';
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { createTemplate, deleteTemplate, fetchTemplate, fetchTemplateCategories, fetchTemplateCvPreview, fetchTemplates, updateTemplate, uploadTemplateCv } from '../api';
 import type { MailTemplate, MailTemplateCategory, TemplateCreatePayload } from '../types';
 
 const templates = ref<MailTemplate[]>([]);
@@ -16,6 +16,10 @@ const isUploadingCv = ref(false);
 const isEditorOpen = ref(false);
 const editingName = ref<string | null>(null);
 const currentCvName = ref<string | null>(null);
+const pendingCv = ref<File | null>(null);
+const cvPreviewUrl = ref<string | null>(null);
+const isPdfPreview = ref(false);
+const isPreviewLoading = ref(false);
 const error = ref<string | null>(null);
 const notice = ref<string | null>(null);
 const editorError = ref<string | null>(null);
@@ -23,6 +27,7 @@ const editorNotice = ref<string | null>(null);
 
 const form = reactive<TemplateCreatePayload>({ name: '', html_body: '', text_body: '', category_id: null });
 const selectedTemplate = computed(() => templates.value.find((item) => item.id === selectedId.value) ?? null);
+const hasCvForPreview = computed(() => pendingCv.value !== null || currentCvName.value !== null);
 const filteredTemplates = computed(() => {
   const query = search.value.trim().toLocaleLowerCase('fr');
   if (query === '') return templates.value;
@@ -60,8 +65,10 @@ async function loadTemplates(): Promise<void> {
 }
 
 function openCreate(): void {
+  closeCvPreview();
   editingName.value = null;
   currentCvName.value = null;
+  pendingCv.value = null;
   Object.assign(form, { name: '', html_body: '', text_body: '', category_id: null });
   editorError.value = null;
   editorNotice.value = null;
@@ -74,8 +81,10 @@ async function openEdit(): Promise<void> {
   error.value = null;
   try {
     const template = await fetchTemplate(selectedTemplate.value.name);
+    closeCvPreview();
     editingName.value = template.name;
     currentCvName.value = template.cv?.original_name ?? null;
+    pendingCv.value = null;
     Object.assign(form, {
       name: template.name,
       html_body: template.html_body,
@@ -93,27 +102,91 @@ async function openEdit(): Promise<void> {
 }
 
 function closeEditor(): void {
-  if (!isSaving.value && !isUploadingCv.value) isEditorOpen.value = false;
+  if (!isSaving.value && !isUploadingCv.value) {
+    closeCvPreview();
+    pendingCv.value = null;
+    isEditorOpen.value = false;
+  }
+}
+
+function closeCvPreview(): void {
+  if (cvPreviewUrl.value !== null) {
+    URL.revokeObjectURL(cvPreviewUrl.value);
+    cvPreviewUrl.value = null;
+  }
+  isPdfPreview.value = false;
+}
+
+async function openCvPreview(): Promise<void> {
+  if (!hasCvForPreview.value || isPreviewLoading.value) return;
+  closeCvPreview();
+  isPreviewLoading.value = true;
+  editorError.value = null;
+  try {
+    const file = pendingCv.value ?? (editingName.value !== null ? await fetchTemplateCvPreview(editingName.value) : null);
+    if (file === null) return;
+
+    const supportedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    if (file.type !== '' && !supportedTypes.includes(file.type)) {
+      throw new Error('Le CV doit être un fichier PDF, DOC ou DOCX.');
+    }
+
+    const header = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+    const hasPdfHeader = header.length === 5 && String.fromCharCode(...header) === '%PDF-';
+    if (file.type === 'application/pdf' && !hasPdfHeader) {
+      throw new Error('Le fichier PDF est invalide.');
+    }
+
+    isPdfPreview.value = hasPdfHeader && (file.type === '' || file.type === 'application/pdf');
+    const preview = isPdfPreview.value ? new Blob([file], { type: 'application/pdf' }) : file;
+    cvPreviewUrl.value = URL.createObjectURL(preview);
+  } catch (caughtError) {
+    editorError.value = caughtError instanceof Error ? caughtError.message : 'Erreur inconnue';
+  } finally {
+    isPreviewLoading.value = false;
+  }
 }
 
 async function save(): Promise<void> {
   isSaving.value = true;
   editorError.value = null;
   editorNotice.value = null;
+  let createdTemplate: MailTemplate | null = null;
   try {
     const created = editingName.value === null;
     const payload = { ...form, name: form.name.trim() };
-    const saved = created
+    let saved = created
       ? await createTemplate(payload)
       : await updateTemplate(editingName.value as string, {
         html_body: payload.html_body, text_body: payload.text_body, category_id: payload.category_id,
       });
+    if (created) {
+      createdTemplate = saved;
+      editingName.value = saved.name;
+      selectedId.value = saved.id;
+    }
+    if (pendingCv.value !== null) {
+      saved = await uploadTemplateCv(saved.name, pendingCv.value);
+      pendingCv.value = null;
+      currentCvName.value = saved.cv?.original_name ?? null;
+    }
+    closeCvPreview();
     isEditorOpen.value = false;
     selectedId.value = saved.id;
     notice.value = created ? 'Template créé.' : 'Template enregistré.';
     await loadTemplates();
   } catch (caughtError) {
-    editorError.value = caughtError instanceof Error ? caughtError.message : 'Erreur inconnue';
+    const message = caughtError instanceof Error ? caughtError.message : 'Erreur inconnue';
+    if (createdTemplate !== null) {
+      templates.value = [...templates.value, createdTemplate].sort((first, second) => first.name.localeCompare(second.name));
+      editorError.value = `Template créé, mais le CV n'a pas été associé : ${message}`;
+    } else {
+      editorError.value = message;
+    }
   } finally {
     isSaving.value = false;
   }
@@ -136,15 +209,23 @@ async function removeSelected(): Promise<void> {
   }
 }
 
-async function uploadCv(event: Event): Promise<void> {
+async function selectCv(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0] ?? null;
-  if (file === null || editingName.value === null) return;
+  if (file === null) return;
+  closeCvPreview();
+  if (editingName.value === null) {
+    pendingCv.value = file;
+    editorError.value = null;
+    input.value = '';
+    return;
+  }
   isUploadingCv.value = true;
   editorError.value = null;
   editorNotice.value = null;
   try {
     const updated = await uploadTemplateCv(editingName.value, file);
+    pendingCv.value = null;
     currentCvName.value = updated.cv?.original_name ?? null;
     templates.value = templates.value.map((item) => item.id === updated.id ? updated : item);
     editorNotice.value = 'CV associé au template.';
@@ -157,6 +238,7 @@ async function uploadCv(event: Event): Promise<void> {
 }
 
 onMounted(loadTemplates);
+onBeforeUnmount(closeCvPreview);
 </script>
 
 <template>
@@ -238,15 +320,20 @@ onMounted(loadTemplates);
           </label>
         </div>
 
-        <div v-if="editingName !== null" class="template-cv-row template-editor-cv">
+        <div class="template-cv-row template-editor-cv">
           <div>
             <h2>CV associé</h2>
-            <p class="muted-text">{{ currentCvName ?? 'Aucun CV associé' }}</p>
+            <p class="muted-text">{{ pendingCv?.name ?? currentCvName ?? 'Aucun CV associé' }}</p>
           </div>
-          <label class="file-action">
-            <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" :disabled="isUploadingCv || isSaving" @change="uploadCv" />
-            <span>{{ isUploadingCv ? 'Envoi' : 'Associer un CV' }}</span>
-          </label>
+          <div class="template-cv-actions">
+            <button type="button" class="ghost-button" :disabled="!hasCvForPreview || isPreviewLoading || isUploadingCv || isSaving" @click="openCvPreview">
+              {{ isPreviewLoading ? 'Chargement' : 'Aperçu du CV' }}
+            </button>
+            <label class="file-action">
+              <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" :disabled="isUploadingCv || isSaving" @change="selectCv" />
+              <span>{{ isUploadingCv ? 'Envoi' : 'Associer un CV' }}</span>
+            </label>
+          </div>
         </div>
 
         <div class="variables-strip template-editor-variables">
@@ -265,6 +352,17 @@ onMounted(loadTemplates);
           <button type="submit" :disabled="isSaving || isUploadingCv">{{ isSaving ? 'Enregistrement' : 'Enregistrer' }}</button>
         </footer>
       </form>
+    </div>
+
+    <div v-if="cvPreviewUrl !== null" class="modal-backdrop" role="presentation" @click.self="closeCvPreview">
+      <section class="modal cv-preview-modal" role="dialog" aria-modal="true" aria-labelledby="cv-preview-title" @keydown.esc="closeCvPreview">
+        <header class="modal-header">
+          <h2 id="cv-preview-title">Aperçu du CV</h2>
+          <button type="button" class="ghost-button" @click="closeCvPreview">Fermer</button>
+        </header>
+        <iframe class="cv-preview-frame" :src="cvPreviewUrl" title="Document CV" :sandbox="isPdfPreview ? undefined : ''" />
+        <p class="muted-text">L'affichage des fichiers DOC et DOCX dépend du navigateur.</p>
+      </section>
     </div>
   </section>
 </template>

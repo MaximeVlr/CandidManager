@@ -123,3 +123,13 @@ export async function uploadTemplateCv(name: string, file: File): Promise<MailTe
 
   return await response.json() as MailTemplate;
 }
+
+export async function fetchTemplateCvPreview(name: string): Promise<Blob> {
+  const response = await fetch(`${apiBaseUrl}/api/templates/${encodeURIComponent(name)}/cv/preview`);
+
+  if (!response.ok) {
+    throw await templateError(response, "Impossible de charger l'aperçu du CV");
+  }
+
+  return await response.blob();
+}

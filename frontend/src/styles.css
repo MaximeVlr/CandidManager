@@ -671,6 +671,26 @@ tbody tr.is-selected {
   margin-top: 18px;
 }
 
+.template-cv-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cv-preview-modal {
+  width: min(900px, 100%);
+}
+
+.cv-preview-frame {
+  width: 100%;
+  height: min(70vh, 780px);
+  margin-top: 18px;
+  border: 1px solid #e1eaec;
+  border-radius: 6px;
+}
+
 .template-editor-grid .editor-panel textarea {
   min-height: 260px;
 }
