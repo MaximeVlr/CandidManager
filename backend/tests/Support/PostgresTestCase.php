@@ -61,8 +61,10 @@ abstract class PostgresTestCase extends KernelTestCase
     {
         $request = Request::create($uri, $method, server: ['CONTENT_TYPE' => 'application/json'], content:
             is_array($body) ? json_encode($body, JSON_THROW_ON_ERROR) : $body);
-        $response = self::$kernel->handle($request);
-        self::$kernel->terminate($request, $response);
+        /** @var Kernel $kernel */
+        $kernel = self::$kernel;
+        $response = $kernel->handle($request);
+        $kernel->terminate($request, $response);
 
         return $response;
     }
