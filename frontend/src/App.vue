@@ -10,6 +10,7 @@ import { fetchMailerSettings } from './modules/mailer/api';
 import MailerSettingsPanel from './modules/mailer/components/MailerSettingsPanel.vue';
 import type { MailerSettings } from './modules/mailer/types';
 import StatsPanel from './modules/stats/components/StatsPanel.vue';
+import CategoriesPanel from './modules/templates/components/CategoriesPanel.vue';
 import TemplatesPanel from './modules/templates/components/TemplatesPanel.vue';
 
 const health = ref<HealthResponse | null>(null);
@@ -31,7 +32,19 @@ const isExportModalOpen = ref(false);
 const error = ref<string | null>(null);
 const notice = ref<string | null>(null);
 const isSidebarCollapsed = ref(false);
-const activeView = ref<'applications' | 'templates' | 'mailer' | 'logs' | 'stats'>('applications');
+const isEmailMenuOpen = ref(true);
+const activeView = ref<'applications' | 'templates' | 'categories' | 'mailer' | 'logs' | 'stats'>('applications');
+const isEmailView = computed(() => ['templates', 'categories', 'mailer'].includes(activeView.value));
+
+function toggleEmailMenu(): void {
+  if (isSidebarCollapsed.value) {
+    isSidebarCollapsed.value = false;
+    isEmailMenuOpen.value = true;
+    return;
+  }
+
+  isEmailMenuOpen.value = !isEmailMenuOpen.value;
+}
 
 const filters = reactive<ApplicationListFilters>({
   search: '',
@@ -480,8 +493,16 @@ watch(activeView, (view) => {
 
       <nav class="nav-list">
         <button type="button" class="nav-item" :class="{ 'is-active': activeView === 'applications' }" title="Candidatures" @click="activeView = 'applications'"><span class="nav-short">C</span><span class="nav-label">Candidatures</span></button>
-        <button type="button" class="nav-item" :class="{ 'is-active': activeView === 'templates' }" title="Templates" @click="activeView = 'templates'"><span class="nav-short">T</span><span class="nav-label">Templates</span></button>
-        <button type="button" class="nav-item" :class="{ 'is-active': activeView === 'mailer' }" title="Mailer" @click="activeView = 'mailer'"><span class="nav-short">M</span><span class="nav-label">Mailer</span></button>
+        <div class="nav-group">
+          <button type="button" class="nav-item nav-group-toggle" :class="{ 'is-active': isEmailView }" :aria-expanded="isEmailMenuOpen && !isSidebarCollapsed" aria-controls="email-submenu" title="Email" @click="toggleEmailMenu">
+            <span class="nav-short">E</span><span class="nav-label">Email</span><span class="nav-chevron" aria-hidden="true">{{ isEmailMenuOpen ? '⌄' : '›' }}</span>
+          </button>
+          <div v-if="isEmailMenuOpen && !isSidebarCollapsed" id="email-submenu" class="nav-submenu">
+            <button type="button" class="nav-item nav-subitem" :class="{ 'is-active': activeView === 'templates' }" @click="activeView = 'templates'">Templates</button>
+            <button type="button" class="nav-item nav-subitem" :class="{ 'is-active': activeView === 'categories' }" @click="activeView = 'categories'">Categories</button>
+            <button type="button" class="nav-item nav-subitem" :class="{ 'is-active': activeView === 'mailer' }" @click="activeView = 'mailer'">Mailer</button>
+          </div>
+        </div>
         <button type="button" class="nav-item" :class="{ 'is-active': activeView === 'logs' }" title="Logs" @click="activeView = 'logs'"><span class="nav-short">L</span><span class="nav-label">Logs</span></button>
         <button type="button" class="nav-item" :class="{ 'is-active': activeView === 'stats' }" title="Stats" @click="activeView = 'stats'"><span class="nav-short">S</span><span class="nav-label">Stats</span></button>
       </nav>
@@ -730,6 +751,8 @@ watch(activeView, (view) => {
       </template>
 
       <TemplatesPanel v-else-if="activeView === 'templates'" />
+
+      <CategoriesPanel v-else-if="activeView === 'categories'" />
 
       <MailerSettingsPanel v-else-if="activeView === 'mailer'" />
 

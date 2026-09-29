@@ -1,6 +1,7 @@
 export type MailTemplate = {
   id: string;
   name: string;
+  category_id: string | null;
   html_body: string;
   text_body: string;
   cv: {
@@ -19,4 +20,14 @@ export type TemplatesResponse = {
 export type TemplateUpdatePayload = {
   html_body: string;
   text_body: string;
+  category_id: string | null;
+};
+
+export type TemplateCreatePayload = TemplateUpdatePayload & {
+  name: string;
+};
+
+export type MailTemplateCategory = {
+  id: string;
+  name: string;
 };

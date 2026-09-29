@@ -191,6 +191,37 @@ textarea {
   color: #ffffff;
 }
 
+.nav-group {
+  display: grid;
+  gap: 4px;
+}
+
+.nav-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-chevron {
+  color: #9cb9bf;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.nav-submenu {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 4px 14px;
+  border-left: 1px solid #355158;
+  padding-left: 10px;
+}
+
+.nav-subitem {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
 .app-shell.is-sidebar-collapsed .nav-item {
   display: grid;
   min-height: 42px;
@@ -205,6 +236,10 @@ textarea {
 
 .app-shell.is-sidebar-collapsed .nav-short {
   display: inline;
+}
+
+.app-shell.is-sidebar-collapsed .nav-chevron {
+  display: none;
 }
 
 .workspace {
@@ -607,6 +642,46 @@ tbody tr.is-selected {
 .templates-layout {
   display: grid;
   gap: 18px;
+}
+
+.templates-layout .topbar {
+  margin-bottom: 0;
+}
+
+.template-table {
+  margin-top: 0;
+}
+
+.template-filters {
+  grid-template-columns: minmax(220px, 360px);
+}
+
+.template-editor-modal {
+  width: min(1060px, 100%);
+}
+
+.category-editor-modal {
+  width: min(520px, 100%);
+}
+
+.template-editor-cv,
+.template-editor-variables,
+.template-editor-grid,
+.template-editor-preview {
+  margin-top: 18px;
+}
+
+.template-editor-grid .editor-panel textarea {
+  min-height: 260px;
+}
+
+.html-preview-frame {
+  width: 100%;
+  min-height: 180px;
+  margin-top: 14px;
+  border: 1px solid #e1eaec;
+  border-radius: 6px;
+  background: #ffffff;
 }
 
 .logs-layout,
