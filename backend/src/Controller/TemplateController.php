@@ -11,13 +11,16 @@ use App\Entity\MailTemplateCategory;
 use App\Repository\DoctrineMailTemplateCategoryRepository;
 use App\Repository\MailTemplateRepositoryInterface;
 use App\Service\AttachCvToTemplateHandler;
+use App\Service\CvAttachmentStorage;
 use App\Service\ListTemplatesHandler;
 use App\Service\MailTemplateValidator;
 use App\Service\UpdateTemplateHandler;
 use App\EventSubscriber\Exception\InvalidApplicationsJsonException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 
 final readonly class TemplateController
@@ -26,6 +29,7 @@ final readonly class TemplateController
         private ListTemplatesHandler $listTemplates,
         private UpdateTemplateHandler $updateTemplate,
         private AttachCvToTemplateHandler $attachCvToTemplate,
+        private CvAttachmentStorage $cvStorage,
         private MailTemplateRepositoryInterface $mailTemplates,
         private DoctrineMailTemplateCategoryRepository $categories,
         private MailTemplateValidator $validator,
@@ -157,6 +161,34 @@ final readonly class TemplateController
         }
 
         return new JsonResponse($template->toArray());
+    }
+
+    #[Route('/api/templates/{name}/cv/preview', name: 'api_templates_cv_preview', methods: ['GET'])]
+    public function previewCv(string $name): BinaryFileResponse|JsonResponse
+    {
+        $template = $this->mailTemplates->findByName($name);
+        if ($template === null) {
+            return new JsonResponse(['message' => 'Template introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $storedName = $template->cvStoredName();
+        $originalName = $template->cvOriginalName();
+        if ($storedName === null || $originalName === null || str_contains($storedName, '/') || str_contains($storedName, '\\')) {
+            return new JsonResponse(['message' => 'Aucun CV associé à ce template.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $path = $this->cvStorage->absolutePath($storedName);
+        if (!is_file($path) || !is_readable($path)) {
+            return new JsonResponse(['message' => 'Fichier CV introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $response = new BinaryFileResponse($path);
+        $response->headers->set('Content-Type', $template->cvMimeType() ?? 'application/octet-stream');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Cache-Control', 'private, no-store');
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $originalName);
+
+        return $response;
     }
 
     /** @return array<string, mixed>|JsonResponse */

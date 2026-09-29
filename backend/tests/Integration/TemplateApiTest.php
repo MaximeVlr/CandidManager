@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration;
 
+use App\Entity\MailTemplate;
+use App\Service\CvAttachmentStorage;
 use App\Tests\Support\PostgresTestCase;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class TemplateApiTest extends PostgresTestCase
 {
@@ -63,5 +67,48 @@ final class TemplateApiTest extends PostgresTestCase
         $this->json($this->request('PUT', '/api/templates/custom', ['html_body' => 'valid', 'text_body' => '']), 422);
         $this->json($this->request('DELETE', '/api/templates/unknown'), 404);
         self::assertSame('Valid', $this->json($this->request('GET', '/api/templates/custom'))['text_body']);
+    }
+
+    public function testPreviewStreamsAssociatedCvInline(): void
+    {
+        $template = new MailTemplate('custom', '<p>Test</p>', 'Test');
+        $this->entityManager->persist($template);
+        $this->entityManager->flush();
+
+        $contents = "%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n";
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'cv-preview-');
+        self::assertNotFalse($temporaryPath);
+        file_put_contents($temporaryPath, $contents);
+        $storage = self::getContainer()->get(CvAttachmentStorage::class);
+        $storedFile = $storage->store(new UploadedFile($temporaryPath, 'CV été.pdf', test: true));
+        $path = $storage->absolutePath($storedFile['stored_name']);
+
+        try {
+            $template->attachCv($storedFile['original_name'], $storedFile['stored_name'], $storedFile['mime_type']);
+            $this->entityManager->flush();
+
+            $response = $this->request('GET', '/api/templates/custom/cv/preview');
+            self::assertInstanceOf(BinaryFileResponse::class, $response);
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame('application/pdf', $response->headers->get('Content-Type'));
+            self::assertStringStartsWith('inline;', $response->headers->get('Content-Disposition'));
+            self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+            self::assertSame($contents, file_get_contents($response->getFile()->getPathname()));
+
+            unlink($path);
+            $this->json($this->request('GET', '/api/templates/custom/cv/preview'), 404);
+        } finally {
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
+    }
+
+    public function testMissingTemplateOrCvReturnsNotFound(): void
+    {
+        $this->json($this->request('GET', '/api/templates/unknown/cv/preview'), 404);
+        $this->entityManager->persist(new MailTemplate('without-cv', '<p>Test</p>', 'Test'));
+        $this->entityManager->flush();
+        $this->json($this->request('GET', '/api/templates/without-cv/cv/preview'), 404);
     }
 }
