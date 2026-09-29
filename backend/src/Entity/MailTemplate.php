@@ -68,6 +68,11 @@ class MailTemplate
         return $this->category;
     }
 
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
     public function setCategory(?MailTemplateCategory $category): void
     {
         if ($this->category === $category) {

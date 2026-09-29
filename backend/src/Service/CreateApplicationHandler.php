@@ -29,6 +29,8 @@ final readonly class CreateApplicationHandler
             $request->followUp,
         );
 
+        $jobApplication->assignTemplate($command->template);
+
         try {
             $this->jobApplications->save($jobApplication);
         } catch (UniqueConstraintViolationException) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command\Application;
 
 use App\DTO\ApplicationUpdateRequest;
+use App\Entity\MailTemplate;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class UpdateApplicationCommand
@@ -12,6 +13,7 @@ final readonly class UpdateApplicationCommand
     public function __construct(
         public Uuid $id,
         public ApplicationUpdateRequest $request,
+        public ?MailTemplate $template = null,
     ) {
     }
 }

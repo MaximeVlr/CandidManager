@@ -25,7 +25,7 @@ final class MigrationTest extends PostgresTestCase
         ], $tables);
         $this->console('doctrine:schema:validate');
         $this->console('doctrine:migrations:migrate');
-        self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM doctrine_migration_versions'));
+        self::assertSame(3, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM doctrine_migration_versions'));
 
         $this->console('doctrine:migrations:migrate', ['version' => '0']);
         self::assertSame(['doctrine_migration_versions'], $this->connection->createSchemaManager()->listTableNames());

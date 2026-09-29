@@ -8,6 +8,7 @@ use App\Entity\MailTemplate;
 use App\Repository\MailTemplateRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends ServiceEntityRepository<MailTemplate>
@@ -39,6 +40,11 @@ final class DoctrineMailTemplateRepository extends ServiceEntityRepository imple
     public function findByName(string $name): ?MailTemplate
     {
         return $this->findOneBy(['name' => $name]);
+    }
+
+    public function findById(Uuid $id): ?MailTemplate
+    {
+        return $this->find($id);
     }
 
     public function findAllTemplates(): array

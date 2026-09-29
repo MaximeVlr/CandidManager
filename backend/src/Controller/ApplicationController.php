@@ -8,6 +8,8 @@ use App\Command\Application\UpdateApplicationCommand;
 use App\Command\Application\CreateApplicationCommand;
 use App\Command\Application\DeleteApplicationCommand;
 use App\DTO\ApplicationUpdateRequest;
+use App\Entity\MailTemplate;
+use App\Repository\MailTemplateRepositoryInterface;
 use App\Service\CreateApplicationHandler;
 use App\Service\DeleteApplicationHandler;
 use App\Service\GetApplicationHandler;
@@ -32,6 +34,7 @@ final readonly class ApplicationController
         private DeleteApplicationHandler $deleteApplication,
         private PreviewApplicationHandler $previewApplication,
         private WebUrlValidator $webUrlValidator,
+        private MailTemplateRepositoryInterface $mailTemplates,
     ) {
     }
 
@@ -61,7 +64,12 @@ final readonly class ApplicationController
             return $updateRequest;
         }
 
-        $jobApplication = ($this->createApplication)(new CreateApplicationCommand($updateRequest));
+        $template = $this->resolveTemplate($updateRequest);
+        if ($template instanceof JsonResponse) {
+            return $template;
+        }
+
+        $jobApplication = ($this->createApplication)(new CreateApplicationCommand($updateRequest, $template));
 
         if ($jobApplication === null) {
             return new JsonResponse([
@@ -117,7 +125,12 @@ final readonly class ApplicationController
             return $updateRequest;
         }
 
-        $jobApplication = ($this->updateApplication)(new UpdateApplicationCommand(Uuid::fromString($id), $updateRequest));
+        $template = $this->resolveTemplate($updateRequest);
+        if ($template instanceof JsonResponse) {
+            return $template;
+        }
+
+        $jobApplication = ($this->updateApplication)(new UpdateApplicationCommand(Uuid::fromString($id), $updateRequest, $template));
 
         if ($jobApplication === null) {
             return new JsonResponse(['message' => 'Candidature introuvable.'], JsonResponse::HTTP_NOT_FOUND);
@@ -181,5 +194,22 @@ final readonly class ApplicationController
         $count = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 5]]);
 
         return $count === false ? null : $count;
+    }
+
+    private function resolveTemplate(ApplicationUpdateRequest $request): MailTemplate|JsonResponse|null
+    {
+        if ($request->templateId === null) {
+            return null;
+        }
+
+        $template = $this->mailTemplates->findById(Uuid::fromString($request->templateId));
+        if ($template !== null) {
+            return $template;
+        }
+
+        return new JsonResponse([
+            'message' => 'Template introuvable.',
+            'errors' => [['index' => null, 'field' => 'template_id', 'message' => 'Template introuvable.']],
+        ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

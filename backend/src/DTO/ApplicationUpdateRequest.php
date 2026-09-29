@@ -7,6 +7,7 @@ namespace App\DTO;
 use App\Entity\Enum\ResponseStatus;
 use App\EventSubscriber\Exception\InvalidApplicationsJsonException;
 use App\Service\WebUrlValidator;
+use Symfony\Component\Uid\Uuid;
 
 final readonly class ApplicationUpdateRequest
 {
@@ -19,6 +20,8 @@ final readonly class ApplicationUpdateRequest
         public string $officialSourceUrl,
         public ResponseStatus $responseStatus,
         public bool $followUp,
+        public ?string $templateId = null,
+        public bool $templateProvided = false,
     ) {
     }
 
@@ -60,6 +63,12 @@ final readonly class ApplicationUpdateRequest
             $errors[] = ['index' => null, 'field' => 'follow_up', 'message' => 'Le champ doit etre un booleen.'];
         }
 
+        if (array_key_exists('template_id', $payload)
+            && $payload['template_id'] !== null
+            && (!is_string($payload['template_id']) || !Uuid::isValid($payload['template_id']))) {
+            $errors[] = ['index' => null, 'field' => 'template_id', 'message' => 'Le template doit être un UUID valide ou null.'];
+        }
+
         if ($errors !== []) {
             throw new InvalidApplicationsJsonException($errors);
         }
@@ -73,6 +82,8 @@ final readonly class ApplicationUpdateRequest
             $webUrlValidator->normalize($payload['official_source_url']),
             $responseStatus,
             $payload['follow_up'],
+            $payload['template_id'] ?? null,
+            array_key_exists('template_id', $payload),
         );
     }
 

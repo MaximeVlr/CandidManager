@@ -35,6 +35,10 @@ final readonly class UpdateApplicationHandler
             $request->followUp,
         );
 
+        if ($request->templateProvided) {
+            $jobApplication->assignTemplate($command->template);
+        }
+
         $this->jobApplications->save($jobApplication);
 
         return $jobApplication;

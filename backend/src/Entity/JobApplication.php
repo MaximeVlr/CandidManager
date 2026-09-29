@@ -39,6 +39,10 @@ class JobApplication
     #[ORM\Column(type: 'text')]
     private string $officialSourceUrl;
 
+    #[ORM\ManyToOne(targetEntity: MailTemplate::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?MailTemplate $template = null;
+
     #[ORM\Column(enumType: SendStatus::class)]
     private SendStatus $sendStatus = SendStatus::Pending;
 
@@ -96,6 +100,21 @@ class JobApplication
         return $this->id;
     }
 
+    public function template(): ?MailTemplate
+    {
+        return $this->template;
+    }
+
+    public function assignTemplate(?MailTemplate $template): void
+    {
+        if ($this->template === $template) {
+            return;
+        }
+
+        $this->template = $template;
+        $this->touch();
+    }
+
     /**
      * @return array{
      *   id: string,
@@ -105,6 +124,7 @@ class JobApplication
      *   subject: string,
      *   custom_message: string,
      *   official_source_url: string,
+     *   template_id: string|null,
      *   send_status: string,
      *   response: string,
      *   follow_up: bool,
@@ -125,6 +145,7 @@ class JobApplication
             'subject' => $this->subject,
             'custom_message' => $this->customMessage,
             'official_source_url' => $this->officialSourceUrl,
+            'template_id' => $this->template?->id()->toRfc4122(),
             'send_status' => $this->sendStatus->value,
             'response' => $this->responseStatus->value,
             'follow_up' => $this->followUp,

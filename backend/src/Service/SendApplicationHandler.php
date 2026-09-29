@@ -24,9 +24,9 @@ final readonly class SendApplicationHandler
     public function __invoke(SendApplicationCommand $command): SendApplicationResult
     {
         $jobApplication = $this->jobApplications->findById($command->id);
-        $template = $command->countFollowUp
+        $template = $jobApplication?->template() ?? ($command->countFollowUp
             ? ($this->mailTemplates->findByName('follow_up') ?? $this->mailTemplates->findDefault())
-            : $this->mailTemplates->findDefault();
+            : $this->mailTemplates->findDefault());
 
         if ($jobApplication === null) {
             return new SendApplicationResult(false, 'Candidature introuvable.', null);
