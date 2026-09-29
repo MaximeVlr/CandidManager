@@ -14,12 +14,24 @@
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
+        <server name="APP_DEBUG" value="1" force="true" />
+        <server name="KERNEL_CLASS" value="App\Kernel" />
+        <server name="APP_SECRET" value="test-secret-not-for-production" force="true" />
+        <server name="MAILER_DSN" value="null://null" force="true" />
+        <server name="MAIL_SEND_ENABLED" value="false" force="true" />
+        <server name="MAIL_DRY_RUN" value="true" force="true" />
+        <server name="MAIL_FROM" value="tests@example.test" force="true" />
+        <server name="MAIL_FROM_NAME" value="Tests" force="true" />
+        <server name="MAIL_MAX_BATCH_SIZE" value="20" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
     </php>
 
     <testsuites>
-        <testsuite name="Project Test Suite">
-            <directory>tests</directory>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
 
