@@ -713,6 +713,36 @@ tbody tr.is-selected {
   gap: 18px;
 }
 
+.mailer-choice-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.smtp-help-modal {
+  width: min(720px, 100%);
+  line-height: 1.5;
+}
+
+.smtp-help-modal p {
+  margin: 18px 0 0;
+}
+
+.smtp-help-settings,
+.smtp-help-steps {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-left: 24px;
+}
+
+.smtp-help-modal a {
+  overflow-wrap: anywhere;
+  color: #176b87;
+}
+
 .readonly-mailer-panel {
   border: 1px solid #dbe5e7;
   border-radius: 8px;
