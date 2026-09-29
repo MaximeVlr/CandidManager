@@ -19,6 +19,10 @@ class MailTemplate
     #[ORM\Column(length: 120, unique: true)]
     private string $name;
 
+    #[ORM\ManyToOne(targetEntity: MailTemplateCategory::class, inversedBy: 'mailTemplates')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?MailTemplateCategory $category = null;
+
     #[ORM\Column(type: 'text')]
     private string $htmlBody;
 
@@ -56,6 +60,24 @@ class MailTemplate
     {
         $this->htmlBody = $htmlBody;
         $this->textBody = $textBody;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function category(): ?MailTemplateCategory
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?MailTemplateCategory $category): void
+    {
+        if ($this->category === $category) {
+            return;
+        }
+
+        $previousCategory = $this->category;
+        $this->category = $category;
+        $previousCategory?->removeMailTemplate($this);
+        $category?->addMailTemplate($this);
         $this->updatedAt = new \DateTimeImmutable();
     }
 
