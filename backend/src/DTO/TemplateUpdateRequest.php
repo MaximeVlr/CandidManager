@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\DTO;
 
 use App\EventSubscriber\Exception\InvalidApplicationsJsonException;
+use Symfony\Component\Uid\Uuid;
 
 final readonly class TemplateUpdateRequest
 {
     public function __construct(
         public string $htmlBody,
         public string $textBody,
+        public ?string $categoryId = null,
+        public bool $categoryProvided = false,
     ) {
     }
 
@@ -29,10 +32,21 @@ final readonly class TemplateUpdateRequest
             $errors[] = ['index' => null, 'field' => 'text_body', 'message' => 'Le template texte est obligatoire.'];
         }
 
+        if (array_key_exists('category_id', $payload)
+            && $payload['category_id'] !== null
+            && (!is_string($payload['category_id']) || !Uuid::isValid($payload['category_id']))) {
+            $errors[] = ['index' => null, 'field' => 'category_id', 'message' => 'La catégorie doit être un UUID valide ou null.'];
+        }
+
         if ($errors !== []) {
             throw new InvalidApplicationsJsonException($errors);
         }
 
-        return new self($payload['html_body'], $payload['text_body']);
+        return new self(
+            $payload['html_body'],
+            $payload['text_body'],
+            $payload['category_id'] ?? null,
+            array_key_exists('category_id', $payload),
+        );
     }
 }

@@ -10,6 +10,8 @@ interface MailTemplateRepositoryInterface
 {
     public function save(MailTemplate $mailTemplate): void;
 
+    public function delete(MailTemplate $mailTemplate): void;
+
     public function findDefault(): ?MailTemplate;
 
     public function findByName(string $name): ?MailTemplate;

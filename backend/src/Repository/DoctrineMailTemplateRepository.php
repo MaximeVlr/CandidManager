@@ -25,6 +25,12 @@ final class DoctrineMailTemplateRepository extends ServiceEntityRepository imple
         $this->getEntityManager()->flush();
     }
 
+    public function delete(MailTemplate $mailTemplate): void
+    {
+        $this->getEntityManager()->remove($mailTemplate);
+        $this->getEntityManager()->flush();
+    }
+
     public function findDefault(): ?MailTemplate
     {
         return $this->findOneBy(['name' => 'default']);

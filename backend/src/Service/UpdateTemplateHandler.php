@@ -28,6 +28,9 @@ final readonly class UpdateTemplateHandler
         );
 
         $template->updateBodies($command->request->htmlBody, $command->request->textBody);
+        if ($command->request->categoryProvided) {
+            $template->setCategory($command->category);
+        }
         $this->mailTemplates->save($template);
 
         return $template;

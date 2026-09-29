@@ -115,13 +115,14 @@ class MailTemplate
     }
 
     /**
-     * @return array{id: string, name: string, html_body: string, text_body: string, cv: array{original_name: string, mime_type: string}|null, created_at: string, updated_at: string}
+     * @return array{id: string, name: string, category_id: string|null, html_body: string, text_body: string, cv: array{original_name: string, mime_type: string}|null, created_at: string, updated_at: string}
      */
     public function toArray(): array
     {
         return [
             'id' => $this->id->toRfc4122(),
             'name' => $this->name,
+            'category_id' => $this->category?->id()->toRfc4122(),
             'html_body' => $this->htmlBody,
             'text_body' => $this->textBody,
             'cv' => $this->cvOriginalName === null ? null : [
