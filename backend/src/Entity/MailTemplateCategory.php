@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Repository\DoctrineMailTemplateCategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: DoctrineMailTemplateCategoryRepository::class)]
 #[ORM\Table(name: 'mail_template_categories')]
 class MailTemplateCategory
 {
@@ -39,6 +40,17 @@ class MailTemplateCategory
     public function name(): string
     {
         return $this->name;
+    }
+
+    public function rename(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    /** @return array{id: string, name: string} */
+    public function toArray(): array
+    {
+        return ['id' => $this->id->toRfc4122(), 'name' => $this->name];
     }
 
     /** @return Collection<int, MailTemplate> */
