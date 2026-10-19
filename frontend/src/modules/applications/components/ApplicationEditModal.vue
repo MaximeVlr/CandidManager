@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
+import { fetchTemplates } from '../../templates/api';
+import type { MailTemplate } from '../../templates/types';
 import type { JobApplication, JobApplicationUpdatePayload } from '../types';
 
 const props = defineProps<{
@@ -13,6 +15,25 @@ const emit = defineEmits<{
   save: [payload: JobApplicationUpdatePayload];
 }>();
 
+const templates = ref<MailTemplate[]>([]);
+const isLoadingTemplates = ref(true);
+const templatesError = ref<string | null>(null);
+
+async function loadTemplates(): Promise<void> {
+  isLoadingTemplates.value = true;
+  templatesError.value = null;
+
+  try {
+    templates.value = (await fetchTemplates()).items;
+  } catch (error) {
+    templatesError.value = error instanceof Error ? error.message : 'Impossible de charger les templates.';
+  } finally {
+    isLoadingTemplates.value = false;
+  }
+}
+
+onMounted(loadTemplates);
+
 const form = reactive<JobApplicationUpdatePayload>({
   company: '',
   location: '',
@@ -22,6 +43,7 @@ const form = reactive<JobApplicationUpdatePayload>({
   official_source_url: '',
   response: 'none',
   follow_up: false,
+  template_id: null,
 });
 
 watch(
@@ -36,6 +58,7 @@ watch(
       form.official_source_url = '';
       form.response = 'none';
       form.follow_up = false;
+      form.template_id = null;
       return;
     }
 
@@ -47,6 +70,7 @@ watch(
     form.official_source_url = application.official_source_url;
     form.response = application.response;
     form.follow_up = application.follow_up;
+    form.template_id = application.template_id ?? null;
   },
   { immediate: true },
 );
@@ -98,6 +122,24 @@ function submit(): void {
             <option value="positive">Positive</option>
             <option value="negative">Negative</option>
           </select>
+        </label>
+
+        <label class="is-wide">
+          <span>Template à utiliser</span>
+          <select v-model="form.template_id" :disabled="isLoadingTemplates || templatesError !== null || isSaving">
+            <option :value="null">Template par défaut</option>
+            <option
+              v-if="form.template_id && !templates.some((template) => template.id === form.template_id)"
+              :value="form.template_id"
+              disabled
+            >Template actuellement associé</option>
+            <option v-for="template in templates" :key="template.id" :value="template.id">
+              {{ template.name }}
+            </option>
+          </select>
+          <span v-if="isLoadingTemplates" role="status">Chargement des templates…</span>
+          <span v-else-if="templatesError" class="error-message" role="alert">{{ templatesError }}</span>
+          <button v-if="templatesError" type="button" class="ghost-button" @click="loadTemplates">Réessayer</button>
         </label>
 
         <label class="is-wide">

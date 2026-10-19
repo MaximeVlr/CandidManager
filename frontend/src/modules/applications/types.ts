@@ -9,6 +9,7 @@ export type JobApplication = {
   send_status: 'pending' | 'sending' | 'sent' | 'failed';
   response: 'none' | 'positive' | 'negative' | 'pending';
   follow_up: boolean;
+  template_id: string | null;
   follow_up_count: number;
   sent_at: string | null;
   last_error: string | null;
@@ -44,6 +45,7 @@ export type JobApplicationUpdatePayload = {
   official_source_url: string;
   response: JobApplication['response'];
   follow_up: boolean;
+  template_id?: string | null;
 };
 
 export type ApplicationPreview = {
