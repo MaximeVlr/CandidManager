@@ -52,6 +52,9 @@ class JobApplication
     #[ORM\Column]
     private bool $followUp = false;
 
+    #[ORM\Column(options: ['default' => false])]
+    private bool $archived = false;
+
     #[ORM\Column]
     private int $followUpCount = 0;
 
@@ -105,6 +108,21 @@ class JobApplication
         return $this->template;
     }
 
+    public function isArchived(): bool
+    {
+        return $this->archived;
+    }
+
+    public function setArchived(bool $archived): void
+    {
+        if ($this->archived === $archived) {
+            return;
+        }
+
+        $this->archived = $archived;
+        $this->touch();
+    }
+
     public function assignTemplate(?MailTemplate $template): void
     {
         if ($this->template === $template) {
@@ -128,6 +146,7 @@ class JobApplication
      *   send_status: string,
      *   response: string,
      *   follow_up: bool,
+     *   archived: bool,
      *   follow_up_count: int,
      *   sent_at: string|null,
      *   last_error: string|null,
@@ -149,6 +168,7 @@ class JobApplication
             'send_status' => $this->sendStatus->value,
             'response' => $this->responseStatus->value,
             'follow_up' => $this->followUp,
+            'archived' => $this->archived,
             'follow_up_count' => $this->followUpCount,
             'sent_at' => $this->sentAt?->format(\DateTimeInterface::ATOM),
             'last_error' => $this->lastError,
