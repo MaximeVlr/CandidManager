@@ -30,6 +30,7 @@ final readonly class CreateApplicationHandler
         );
 
         $jobApplication->assignTemplate($command->template);
+        $jobApplication->setArchived($request->archived);
 
         try {
             $this->jobApplications->save($jobApplication);

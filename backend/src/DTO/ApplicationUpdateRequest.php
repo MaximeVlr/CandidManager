@@ -22,6 +22,8 @@ final readonly class ApplicationUpdateRequest
         public bool $followUp,
         public ?string $templateId = null,
         public bool $templateProvided = false,
+        public bool $archived = false,
+        public bool $archivedProvided = false,
     ) {
     }
 
@@ -69,6 +71,10 @@ final readonly class ApplicationUpdateRequest
             $errors[] = ['index' => null, 'field' => 'template_id', 'message' => 'Le template doit être un UUID valide ou null.'];
         }
 
+        if (array_key_exists('archived', $payload) && !is_bool($payload['archived'])) {
+            $errors[] = ['index' => null, 'field' => 'archived', 'message' => 'Le champ doit etre un booleen.'];
+        }
+
         if ($errors !== []) {
             throw new InvalidApplicationsJsonException($errors);
         }
@@ -84,6 +90,8 @@ final readonly class ApplicationUpdateRequest
             $payload['follow_up'],
             $payload['template_id'] ?? null,
             array_key_exists('template_id', $payload),
+            $payload['archived'] ?? false,
+            array_key_exists('archived', $payload),
         );
     }
 

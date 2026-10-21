@@ -215,6 +215,8 @@ PATCH http://localhost:8080/api/applications/{id}
 Content-Type: application/json
 ```
 
+Le champ optionnel `archived` peut etre ajoute au payload d'edition : `true` archive la candidature, `false` la desarchive. S'il est absent, l'etat d'archivage est conserve. Seuls les booleens JSON sont acceptes. Ce champ est aussi accepte a la creation et vaut `false` par defaut.
+
 Exports :
 
 ```text

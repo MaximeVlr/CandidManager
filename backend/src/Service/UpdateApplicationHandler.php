@@ -39,6 +39,10 @@ final readonly class UpdateApplicationHandler
             $jobApplication->assignTemplate($command->template);
         }
 
+        if ($request->archivedProvided) {
+            $jobApplication->setArchived($request->archived);
+        }
+
         $this->jobApplications->save($jobApplication);
 
         return $jobApplication;
